@@ -85,10 +85,10 @@ async function run() {
     
     app.post('/users', async(req, res) => {
       const user = req.body;
-      console.log(user);
+      // console.log(user);
       const query = {email: user.email};
       const existingUser = await usersCollection.findOne(query);
-      console.log('existing user', existingUser);
+      // console.log('existing user', existingUser);
       if(existingUser){
         return res.send({message: 'User Already Exists'})
       }
@@ -152,6 +152,30 @@ async function run() {
       const result = await classCollection.insertOne(newClass);
       res.send(result);
     })
+
+    app.get('/classes', async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    app.patch('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { status } = req.body;
+    
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: { status },
+        };
+    
+        const result = await classCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating class status:", error);
+        res.status(500).send({ error: true, message: "Failed to update class status" });
+      }
+    });
 
 
     // Send a ping to confirm a successful connection
