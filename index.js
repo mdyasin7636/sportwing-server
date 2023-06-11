@@ -45,6 +45,7 @@ async function run() {
     client.connect();
 
     const usersCollection = client.db('sportWingDb').collection('users');
+    const classCollection = client.db('sportWingDb').collection('classes');
 
 
     app.post('/jwt', (req, res) => {
@@ -64,10 +65,20 @@ async function run() {
       next();
     }
 
+    const verifyInstructor = async(req, res, next) => {
+      const email = req.decoded.email;
+      const query = {email: email}
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'instructor') {
+        return res.status(403).send({error: true, message: 'forbidden message'})
+      }
+      next();
+    }
+
 
     // users related apis
 
-    app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
+    app.get('/users', async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     })
@@ -134,6 +145,12 @@ async function run() {
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result)
+    })
+
+    app.post('/classes', async(req, res) => {
+      const newClass = req.body;
+      const result = await classCollection.insertOne(newClass);
+      res.send(result);
     })
 
 
