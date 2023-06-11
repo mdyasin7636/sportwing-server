@@ -46,6 +46,7 @@ async function run() {
 
     const usersCollection = client.db('sportWingDb').collection('users');
     const classCollection = client.db('sportWingDb').collection('classes');
+    const bookedCollection = client.db('sportWingDb').collection('bookedClass');
 
 
     app.post('/jwt', (req, res) => {
@@ -74,6 +75,13 @@ async function run() {
       }
       next();
     }
+
+
+    app.post('/bookedClass', async(req,res) => {
+      const item = req.body;
+      const result = await bookedCollection.insertOne(item)
+      res.send(result);
+    })
 
 
     // users related apis
@@ -174,6 +182,24 @@ async function run() {
       } catch (error) {
         console.error("Error updating class status:", error);
         res.status(500).send({ error: true, message: "Failed to update class status" });
+      }
+    });
+
+
+    app.post("/feedback", verifyJWT, async (req, res) => {
+      try {
+        const { classId, feedback } = req.body;
+    
+        const filter = { _id: new ObjectId(classId) };
+        const updateDoc = {
+          $set: { feedback },
+        };
+        const result = await classCollection.updateOne(filter, updateDoc);
+    
+        res.send(result);
+      } catch (error) {
+        console.error("Error submitting feedback:", error);
+        res.status(500).send({ error: "Failed to submit feedback" });
       }
     });
 
