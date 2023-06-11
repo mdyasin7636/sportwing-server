@@ -83,6 +83,15 @@ async function run() {
       res.send(result);
     })
 
+    app.get('/bookedClass', async (req, res) => {
+      const email = req.query.email;
+      if(!email) {
+        res.send([])
+      }
+      const query = {email: email};
+      const result = await bookedCollection.find(query).toArray();
+      res.send(result);
+    })
 
     // users related apis
 
