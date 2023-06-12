@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.port || 5000;
 
@@ -47,6 +48,7 @@ async function run() {
     const usersCollection = client.db('sportWingDb').collection('users');
     const classCollection = client.db('sportWingDb').collection('classes');
     const bookedCollection = client.db('sportWingDb').collection('bookedClass');
+    const paymentCollection = client.db('sportWingDb').collection('payments');
 
 
     app.post('/jwt', (req, res) => {
@@ -90,6 +92,13 @@ async function run() {
       }
       const query = {email: email};
       const result = await bookedCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.delete('/bookedClass/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await bookedCollection.deleteOne(query);
       res.send(result);
     })
 
@@ -211,6 +220,39 @@ async function run() {
         res.status(500).send({ error: "Failed to submit feedback" });
       }
     });
+
+    // create payment intent
+    
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      console.log(price, amount);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+    app.post('/payments', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result);
+    })
+
+    app.get('/payments', verifyJWT, async (req, res) => {
+      try {
+        const result = await paymentCollection.find().sort({ data: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error('Error retrieving payment history:', error);
+        res.status(500).send({ error: true, message: 'Failed to retrieve payment history' });
+      }
+    });
+    
 
 
     // Send a ping to confirm a successful connection
