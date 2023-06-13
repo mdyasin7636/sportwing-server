@@ -62,7 +62,7 @@ async function run() {
       const email = req.decoded.email;
       const query = {email: email}
       const user = await usersCollection.findOne(query);
-      if(user?.role !== 'admin') {
+      if(user?.role !== 'Admin') {
         return res.status(403).send({error: true, message: 'forbidden message'})
       }
       next();
@@ -72,7 +72,7 @@ async function run() {
       const email = req.decoded.email;
       const query = {email: email}
       const user = await usersCollection.findOne(query);
-      if(user?.role !== 'instructor') {
+      if(user?.role !== 'Instructor') {
         return res.status(403).send({error: true, message: 'forbidden message'})
       }
       next();
@@ -126,11 +126,11 @@ async function run() {
       const email = req.params.email;
 
       if(req.decoded.email !== email) {
-        res.send ({admin: false})
+        res.send ({Admin: false})
       }
       const query = {email: email}
       const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'admin'}
+      const result = { Admin: user?.role === 'Admin'}
       res.send(result)
     })
 
@@ -140,7 +140,7 @@ async function run() {
       const filter = { _id: new ObjectId(id)};
       const updateDoc = {
         $set: {
-          role: 'admin'
+          role: 'Admin'
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
@@ -152,11 +152,11 @@ async function run() {
       const email = req.params.email;
 
       if(req.decoded.email !== email) {
-        res.send ({instructor: false})
+        res.send ({Instructor: false})
       }
       const query = {email: email}
       const user = await usersCollection.findOne(query);
-      const result = { instructor: user?.role === 'instructor'}
+      const result = { Instructor: user?.role === 'Instructor'}
       res.send(result)
     })
 
@@ -166,12 +166,26 @@ async function run() {
       const filter = { _id: new ObjectId(id)};
       const updateDoc = {
         $set: {
-          role: 'instructor'
+          role: 'Instructor'
         },
       };
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result)
     })
+
+
+    app.get('/users/student/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if(req.decoded.email !== email) {
+        res.send ({student: false})
+      }
+      const query = {email: email}
+      const user = await usersCollection.findOne(query);
+      const result = { student: user?.role === 'Student'}
+      res.send(result)
+    })
+
 
     app.post('/classes', async(req, res) => {
       const newClass = req.body;
