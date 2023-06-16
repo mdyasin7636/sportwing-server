@@ -78,6 +78,18 @@ async function run() {
       next();
     }
 
+    const verifyStudent = async(req, res, next) => {
+      const email = req.decoded.email;
+      const query = {email: email}
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'Student') {
+        return res.status(403).send({error: true, message: 'forbidden message'})
+      }
+      next();
+    }
+
+
+
 
     app.post('/bookedClass', async(req,res) => {
       const item = req.body;
@@ -178,11 +190,11 @@ async function run() {
       const email = req.params.email;
 
       if(req.decoded.email !== email) {
-        res.send ({student: false})
+        res.send ({Student: false})
       }
       const query = {email: email}
       const user = await usersCollection.findOne(query);
-      const result = { student: user?.role === 'Student'}
+      const result = { Student: user?.role === 'Student'}
       res.send(result)
     })
 
